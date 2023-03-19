@@ -1,0 +1,13 @@
+services:
+  orgdash:
+    image: dhaval15/orgdash:latest
+    container_name: orgdash
+    restart: unless-stopped
+    ports:
+      - "9042:8080"
+    volumes:
+      - "/home/dhaval/Hive/Realm/Neuron:/Neuron"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - SQLITE_LIBRARY_PATH=/usr/lib/libsqlite3.so

@@ -11,11 +11,13 @@ class FrontEndServer {
   final Graph graph;
   final int port;
   final Handler _staticHandler;
+  final String Function(String path)? pathTransformer;
 
   FrontEndServer({
     required this.graph,
     required this.port,
     required String publicPath,
+    this.pathTransformer,
   }) : _staticHandler = shelf_static.createStaticHandler(publicPath,
             defaultDocument: 'index.html');
 
@@ -36,8 +38,9 @@ class FrontEndServer {
     ..get('/data', _getGraph);
 
   Response _getNodeContent(Request req, String id) {
-    final path = graph.nodes.where((node) => node.id == id).first.file;
-    final file = File(path);
+    final originalPath = graph.nodes.where((node) => node.id == id).first.file;
+		final newPath = pathTransformer?.call(originalPath) ?? originalPath;
+    final file = File(newPath);
     final text = file.readAsStringSync();
     return Response.ok(text);
   }
