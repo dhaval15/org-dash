@@ -6,6 +6,7 @@ import 'package:shelf_router/shelf_router.dart' as shelf_router;
 import 'package:shelf_static/shelf_static.dart' as shelf_static;
 
 import 'models.dart';
+import 'parser.dart';
 
 class FrontEndServer {
   final Graph graph;
@@ -35,11 +36,12 @@ class FrontEndServer {
 
   shelf_router.Router get _router => shelf_router.Router()
     ..get('/node/<id>', _getNodeContent)
+    ..get('/filter', _filterGraph)
     ..get('/data', _getGraph);
 
   Response _getNodeContent(Request req, String id) {
     final originalPath = graph.nodes.where((node) => node.id == id).first.file;
-		final newPath = pathTransformer?.call(originalPath) ?? originalPath;
+    final newPath = pathTransformer?.call(originalPath) ?? originalPath;
     final file = File(newPath);
     final text = file.readAsStringSync();
     return Response.ok(text);
@@ -51,5 +53,35 @@ class FrontEndServer {
       'data': graph.toJson(),
     });
     return Response.ok(content);
+  }
+
+  Future<Response> _filterGraph(Request req) async {
+    final params = req.url.queryParameters;
+    final filterQuery = params['q'];
+    final expression = ExpressionParser.parse(filterQuery!);
+    final content = JsonEncoder().convert({
+      'type': 'graphdata',
+      'data': graph.filter(expression).toJson(),
+    });
+    return Response.ok(content);
+  }
+}
+
+extension on Graph {
+  Graph filter(Expression expression) {
+    final newNodes = nodes.where(expression.evaluate).toList();
+    final newNodeIds = nodes.map((node) => node.id).toList();
+    final newLinks = links
+        .where((link) =>
+            newNodeIds.contains(link.source) &&
+            newNodeIds.contains(link.target))
+        .toList();
+    final newTags =
+        nodes.fold<Set<String>>({}, (prev, node) => prev..addAll(node.tags));
+    return Graph(
+      nodes: newNodes,
+      links: newLinks,
+      tags: newTags.toList(),
+    );
   }
 }

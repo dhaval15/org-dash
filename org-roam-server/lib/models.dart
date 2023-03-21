@@ -32,6 +32,10 @@ class Node {
   final String title;
   final String file;
 
+	String get type => properties.type ?? 'None';
+	String get genre => properties.genre ?? 'None';
+	String get space => properties.space ?? 'None';
+
   const Node({
     required this.id,
     required this.tags,
@@ -73,6 +77,7 @@ class Node {
 class Properties {
   final String? category;
   final String? genre;
+  final String? space;
   final String? type;
   final String id;
   final String blocked;
@@ -83,6 +88,7 @@ class Properties {
     this.category,
     this.genre,
     this.type,
+		this.space,
     required this.id,
     required this.blocked,
     required this.file,
@@ -93,6 +99,7 @@ class Properties {
         category: json['CATEGORY'],
         genre: json['NEURON_GENRE'],
         type: json['NEURON_TYPE'],
+        space: json['NEURON_SPACE'],
         id: json['id'] ?? json['ID'],
         blocked: json['BLOCKED'],
         file: json['FILE'],
@@ -103,6 +110,7 @@ class Properties {
         'category': category,
         'genre': genre,
         'type': type,
+        'space': space,
         'id': id,
         'blocked': blocked,
         'file': file,
