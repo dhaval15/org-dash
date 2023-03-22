@@ -430,7 +430,7 @@ export function GraphPage() {
 
   useEffect(() => {
     // initialize websocket
-		fetch('data')
+		fetch('neuron')
 			.then((response) => response.json())
 			.then((data) => {
       	updateGraphData(data.data)

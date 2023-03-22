@@ -19,15 +19,15 @@ Sqlite version: ${sqlite3.version}
 Org-roam database: $dbPath
 Org-roam-ui public dir: $publicPath''');
   final api = SqlApi(dbPath: dbPath, sqlLibPath: sqlLibPath);
-  final graph = await api.fetch();
-  final frontEnd = FrontEndServer(
+  final neuron = await api.fetch();
+  final backEnd = NeuronBackend(
     port: uiPort,
-    graph: graph,
+    neuron: neuron,
     publicPath: publicPath,
     pathTransformer: (path) =>
         path.replaceFirst(originalDirectoryPath, neuronPath),
   );
-  await frontEnd.init();
+  await backEnd.init();
   print('''
 Creating server
 Serving at http://localhost:$uiPort''');

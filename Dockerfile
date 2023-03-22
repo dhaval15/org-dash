@@ -17,8 +17,7 @@ COPY org-roam-ui/package.json /app
 COPY org-roam-ui/yarn.lock /app
 RUN yarn 
 COPY org-roam-ui/. /app 
-CMD yarn build & export
-
+RUN yarn build && yarn export
 
 # Build minimal serving image from AOT-compiled `/server`
 # and the pre-built AOT-runtime in the `/runtime/` directory of the base image.
