@@ -37,7 +37,7 @@ export const UniOrg = (props: UniOrgProps) => {
 
   const id = encodeURIComponent(encodeURIComponent(previewNode.id))
   useEffect(() => {
-    fetch(`content/${id}`)
+    fetch(`api/content/${id}`)
       .then((res) => {
         return res.text()
       })

@@ -151,7 +151,7 @@ export const PreviewLink = (props: LinkProps) => {
   const extraNoteStyle = outline ? outlineNoteStyle : viewerNoteStyle
   console.log(previewNode)
   const getText = () => {
-    fetch(`content/${id}`)
+    fetch(`api/content/${id}`)
       .then((res) => {
         return res.text()
       })
