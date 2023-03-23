@@ -23,10 +23,7 @@ class ApiHandlers {
   }
 
   Response getNeuron(Request req) {
-    final content = JsonEncoder().convert({
-      'type': 'graphdata',
-      'data': neuron.toJson(),
-    });
+    final content = JsonEncoder().convert(neuron.toJson());
     return Response.ok(content);
   }
 
@@ -34,10 +31,7 @@ class ApiHandlers {
     final params = req.url.queryParameters;
     final filterQuery = params['q'];
     final expression = Expression.parse(filterQuery!);
-    final content = JsonEncoder().convert({
-      'type': 'graphdata',
-      'data': neuron.filter(expression).toJson(),
-    });
+    final content = JsonEncoder().convert(neuron.filter(expression).toJson());
     return Response.ok(content);
   }
 }

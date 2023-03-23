@@ -433,7 +433,7 @@ export function GraphPage() {
 		fetch('api/neuron')
 			.then((response) => response.json())
 			.then((data) => {
-      	updateGraphData(data.data)
+      	updateGraphData(data)
 		})
 		
 
