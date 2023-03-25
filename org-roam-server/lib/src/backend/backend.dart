@@ -28,13 +28,20 @@ class NeuronBackend {
     final cascade = Cascade().add(staticHandler).add(router);
 
     final server = await shelf_io.serve(
-      logRequests().addHandler(cascade.handler),
+      logRequests(logger: logger).addHandler(cascade.handler),
       InternetAddress.anyIPv4,
       port,
     );
 
     print('Serving at http://${server.address.host}:${server.port}');
   }
+
+  void logger(String message, bool isError) async{
+		final file = File('orglogs.txt');
+		if(isError){
+			file.writeAsString(message);
+		}
+	}
 
   shelf_router.Router get router => shelf_router.Router()
     ..get('/api/content/<id>', handlers.getContent)

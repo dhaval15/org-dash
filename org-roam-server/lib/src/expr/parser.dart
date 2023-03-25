@@ -9,6 +9,7 @@ class ExpressionParserDefinition extends _ExpressionGrammarDefinition {
   @override
   Parser type() => super.type().map((value) => TypeExpression(value[1]));
 
+
   @override
   Parser typeIn() => super.typeIn().map((value) => TypeInExpression(value[1]));
 
@@ -25,6 +26,9 @@ class ExpressionParserDefinition extends _ExpressionGrammarDefinition {
   @override
   Parser spaceIn() =>
       super.spaceIn().map((value) => SpaceInExpression(value[1]));
+
+  @override
+  Parser regex() => super.regex().map((value) => RegexpExpression(value[1]));
 
   @override
   Parser and() => super.and().map((value) => AndExpression(value[1]));
@@ -64,6 +68,7 @@ class _ExpressionGrammarDefinition extends GrammarDefinition with _TokenMixin {
       ref0(typeIn) |
       ref0(genreIn) |
       ref0(spaceIn) |
+      ref0(regex) |
       ref0(and) |
       ref0(or) |
       ref0(not);
@@ -83,6 +88,8 @@ class _ExpressionGrammarDefinition extends GrammarDefinition with _TokenMixin {
   Parser genreIn() => ref1(token, 'genre-in') & ref0(stringArguments);
 
   Parser spaceIn() => ref1(token, 'space-in') & ref0(stringArguments);
+
+  Parser regex() => ref1(token, 'regex') & ref0(stringToken);
 
   Parser and() => ref1(token, 'and') & ref0(expressionArguments);
 

@@ -1,3 +1,3 @@
 export 'src/backend/backend.dart';
-//export 'models.dart';
+export 'src/expr/expr.dart';
 export 'src/sql/sql.dart';

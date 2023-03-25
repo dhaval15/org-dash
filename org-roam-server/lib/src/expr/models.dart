@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io';
+
 import '../models/models.dart';
 import 'parser.dart';
 
@@ -11,7 +14,7 @@ abstract class Expression<T> {
 
   List<T> get arguments;
 
-  bool evaluate(Node node);
+  FutureOr<bool> evaluate(Node node);
 
   String toString() {
     final buffer = StringBuffer();
@@ -126,12 +129,12 @@ class AndExpression extends Expression<Expression> {
   AndExpression(this.arguments);
 
   @override
-  bool evaluate(Node node) {
+  FutureOr<bool> evaluate(Node node) async {
     final iterator = arguments.iterator;
     Expression? e;
     while (iterator.moveNext()) {
       e = iterator.current;
-      if (!e.evaluate(node)) {
+      if (!await e.evaluate(node)) {
         return false;
       }
     }
@@ -149,12 +152,12 @@ class OrExpression extends Expression<Expression> {
   OrExpression(this.arguments);
 
   @override
-  bool evaluate(Node node) {
+  FutureOr<bool> evaluate(Node node) async {
     final iterator = arguments.iterator;
     Expression? e;
     while (iterator.moveNext()) {
       e = iterator.current;
-      if (e.evaluate(node)) {
+      if (await e.evaluate(node)) {
         return true;
       }
     }
@@ -173,12 +176,12 @@ class NotExpression extends Expression<Expression> {
   NotExpression(this.expression);
 
   @override
-  bool evaluate(Node node) {
+  Future<bool> evaluate(Node node) async {
     final iterator = arguments.iterator;
     Expression? e;
     while (iterator.moveNext()) {
       e = iterator.current;
-      if (e.evaluate(node)) {
+      if (await e.evaluate(node)) {
         return true;
       }
     }
@@ -187,4 +190,29 @@ class NotExpression extends Expression<Expression> {
 
   @override
   String get method => 'or';
+}
+
+class RegexpExpression extends Expression<String> {
+  static String Function(String path)? pathTransformer;
+  RegexpExpression(this.query);
+
+  @override
+  String get method => "regex";
+  final String query;
+
+  @override
+  List<String> get arguments => [query];
+
+  @override
+  FutureOr<bool> evaluate(Node node) async{
+    final path = pathTransformer?.call(node.file) ?? node.file;
+    final lines = await File(path).readAsLines();
+		final regex = RegExp(query);
+    for (final line in lines) {
+      if (regex.hasMatch(line)) {
+        return true;
+      }
+    }
+		return false;
+  }
 }

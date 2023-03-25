@@ -18,16 +18,18 @@ Sqlite library :$sqlLibPath
 Sqlite version: ${sqlite3.version}
 Org-roam database: $dbPath
 Org-roam-ui public dir: $publicPath''');
+  final pathTransformer =
+      (String path) => path.replaceFirst(originalDirectoryPath, neuronPath);
   final api = SqlApi(dbPath: dbPath, sqlLibPath: sqlLibPath);
   final neuron = await api.fetch();
   final backEnd = NeuronBackend(
     port: uiPort,
     neuron: neuron,
     publicPath: publicPath,
-    pathTransformer: (path) =>
-        path.replaceFirst(originalDirectoryPath, neuronPath),
+    pathTransformer: pathTransformer,
   );
   await backEnd.init();
+  RegexpExpression.pathTransformer = pathTransformer;
   print('''
 Creating server
 Serving at http://localhost:$uiPort''');

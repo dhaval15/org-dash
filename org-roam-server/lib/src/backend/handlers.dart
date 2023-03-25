@@ -9,7 +9,7 @@ class ApiHandlers {
   final Neuron neuron;
   final String Function(String path)? pathTransformer;
 
-  const ApiHandlers({
+  ApiHandlers({
     required this.neuron,
     this.pathTransformer,
   });
@@ -31,14 +31,20 @@ class ApiHandlers {
     final params = req.url.queryParameters;
     final filterQuery = params['q'];
     final expression = Expression.parse(filterQuery!);
-    final content = JsonEncoder().convert(neuron.filter(expression).toJson());
+    final result = (await neuron.filter(expression)).toJson();
+    final content = JsonEncoder().convert(result);
     return Response.ok(content);
   }
 }
 
 extension on Neuron {
-  Neuron filter(Expression expression) {
-    final newNodes = nodes.where(expression.evaluate).toList();
+  Future<Neuron> filter(Expression expression) async {
+    final newNodes = <Node>[];
+    for (final node in nodes) {
+      if (await expression.evaluate(node)) {
+        newNodes.add(node);
+      }
+    }
     final newNodeIds = nodes.map((node) => node.id).toList();
     final newLinks = links
         .where((link) =>
