@@ -46,5 +46,6 @@ class NeuronBackend {
   shelf_router.Router get router => shelf_router.Router()
     ..get('/api/content/<id>', handlers.getContent)
     ..get('/api/expr', handlers.expr)
+    ..get('/api/nodelinkref', handlers.nodeLinkRef)
     ..get('/api/neuron', handlers.getNeuron);
 }
