@@ -1,43 +1,36 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:server/server.dart';
+import 'package:server/src/env/env.dart';
 import 'package:server/src/models/neuron_options.dart';
 import 'package:server/src/models/neuron.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 void main(List<String> arguments) async {
-  final uiPort = int.parse(Platform.environment['UI_PORT'] ?? '8080');
-  final sqlLibPath = Platform.environment['SQLITE_LIBRARY_PATH'] ??
-      '/usr/lib/x86_64-linux-gnu/libsqlite3.so';
-  final neuronPath =
-      Platform.environment['NEURON_PATH']?.trailingComma() ?? '/Neuron';
-  final originalDirectoryPath =
-      Platform.environment['ORIGINAL_DIRECTORY_PATH']?.trailingComma() ??
-          '/home/dhaval/Hive/Realm/Neuron';
-  final dbPath = Platform.environment['DB_PATH'] ?? '$neuronPath/neuron.db';
-  final publicPath = Platform.environment['PUBLIC_PATH'] ?? '/public';
+  final env = Env.fromPlatform();
   print('''
-Sqlite library :$sqlLibPath
+Sqlite library :${env.sqlLibPath}
 Sqlite version: ${sqlite3.version}
-Org-roam database: $dbPath
-Org-roam-ui public dir: $publicPath''');
-  final api = SqlApi(dbPath: dbPath, sqlLibPath: sqlLibPath);
+Org-roam database: ${env.dbPath}
+Org-roam-ui public dir: ${env.publicPath}''');
+  final api = SqlApi(dbPath: env.dbPath, sqlLibPath: env.sqlLibPath);
   final neuron = await api.fetch();
   final context = NeuronRouterContext(
     neuron: neuron,
     pathTransformer: (String path) =>
-        path.replaceFirst(originalDirectoryPath, neuronPath),
+        path.replaceFirst(env.originalDirectoryPath, env.neuronPath),
   );
   final backEnd = NeuronServer(
-    port: uiPort,
-    vueRouter: VueRouter(publicPath),
+    port: env.uiPort,
+    vueRouter: VueRouter(env.publicPath),
     apiRouter: ApiRouter(context),
+    logger: FileLogger(),
   );
   await backEnd.init();
   RegexpExpression.pathTransformer = context.pathTransformer;
   print('''
 Creating server
-Serving at http://localhost:$uiPort''');
+Serving at http://localhost:${env.uiPort}''');
 }
 
 class NeuronRouterContext with RouterContext {
@@ -49,7 +42,6 @@ class NeuronRouterContext with RouterContext {
 
   final Neuron neuron;
 
-  @override
   final String Function(String path) pathTransformer;
 
   NeuronRouterContext({
@@ -72,8 +64,4 @@ class FileLogger extends Logger {
       file.writeAsString(message);
     }
   }
-}
-
-extension on String {
-  String trailingComma() => this.endsWith('/') ? this : (this + '/');
 }
