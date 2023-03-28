@@ -9,23 +9,15 @@ class ExpressionParserDefinition extends _ExpressionGrammarDefinition {
   @override
   Parser type() => super.type().map((value) => TypeExpression(value[1]));
 
-
   @override
-  Parser typeIn() => super.typeIn().map((value) => TypeInExpression(value[1]));
+  Parser prop() =>
+      super.prop().map((value) => PropExpression(value[1], value[2]));
 
   @override
   Parser genre() => super.genre().map((value) => GenreExpression(value[1]));
 
   @override
-  Parser genreIn() =>
-      super.genreIn().map((value) => GenreInExpression(value[1]));
-
-  @override
   Parser space() => super.space().map((value) => SpaceExpression(value[1]));
-
-  @override
-  Parser spaceIn() =>
-      super.spaceIn().map((value) => SpaceInExpression(value[1]));
 
   @override
   Parser regex() => super.regex().map((value) => RegexpExpression(value[1]));
@@ -62,12 +54,10 @@ class _ExpressionGrammarDefinition extends GrammarDefinition with _TokenMixin {
       ref1(token, _TokenMixin.closeParenthesis);
 
   Parser expressionContent() =>
+      ref0(prop) |
       ref0(type) |
       ref0(genre) |
       ref0(space) |
-      ref0(typeIn) |
-      ref0(genreIn) |
-      ref0(spaceIn) |
       ref0(regex) |
       ref0(and) |
       ref0(or) |
@@ -77,17 +67,13 @@ class _ExpressionGrammarDefinition extends GrammarDefinition with _TokenMixin {
 
   Parser expressionArguments() => ref0(expression).plus();
 
-  Parser type() => ref1(token, 'type') & ref0(stringToken);
+  Parser prop() => ref1(token, 'prop') & ref0(stringToken) & ref0(stringArguments);
 
-  Parser genre() => ref1(token, 'genre') & ref0(stringToken);
+  Parser type() => ref1(token, 'type') & ref0(stringArguments);
 
-  Parser space() => ref1(token, 'space') & ref0(stringToken);
+  Parser genre() => ref1(token, 'genre') & ref0(stringArguments);
 
-  Parser typeIn() => ref1(token, 'type-in') & ref0(stringArguments);
-
-  Parser genreIn() => ref1(token, 'genre-in') & ref0(stringArguments);
-
-  Parser spaceIn() => ref1(token, 'space-in') & ref0(stringArguments);
+  Parser space() => ref1(token, 'space') & ref0(stringArguments);
 
   Parser regex() => ref1(token, 'regex') & ref0(stringToken);
 

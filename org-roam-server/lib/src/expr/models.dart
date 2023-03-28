@@ -5,6 +5,7 @@ import '../models/models.dart';
 import 'parser.dart';
 
 abstract class Expression<T> {
+  const Expression();
   static final parser = ExpressionParserDefinition().build();
 
   static Expression parse(String input) =>
@@ -26,59 +27,30 @@ abstract class Expression<T> {
   }
 }
 
+class PropExpression extends Expression<String> {
+  const PropExpression(this.property, this.values);
+
+  @override
+  String get method => "prop";
+
+  final List<String> values;
+  final String property;
+
+  @override
+  List<String> get arguments => [property, ... values];
+
+  @override
+  bool evaluate(Node node) {
+    return values.contains(node.properties[property]);
+  }
+
+}
+
 class TypeExpression extends Expression<String> {
-  TypeExpression(this.type);
+  TypeExpression(this.types);
 
   @override
   String get method => "type";
-  final String type;
-
-  @override
-  List<String> get arguments => [type];
-
-  @override
-  bool evaluate(Node node) {
-    return node.type == type;
-  }
-}
-
-class GenreExpression extends Expression<String> {
-  GenreExpression(this.genre);
-
-  @override
-  String get method => "genre";
-  final String genre;
-
-  @override
-  List<String> get arguments => [genre];
-
-  @override
-  bool evaluate(Node node) {
-    return node.genre == genre;
-  }
-}
-
-class SpaceExpression extends Expression<String> {
-  SpaceExpression(this.space);
-
-  @override
-  String get method => "space";
-  final String space;
-
-  @override
-  List<String> get arguments => [space];
-
-  @override
-  bool evaluate(Node node) {
-    return node.space == space;
-  }
-}
-
-class TypeInExpression extends Expression<String> {
-  TypeInExpression(this.types);
-
-  @override
-  String get method => "type-in";
   final List<String> types;
 
   @override
@@ -90,11 +62,11 @@ class TypeInExpression extends Expression<String> {
   }
 }
 
-class GenreInExpression extends Expression<String> {
-  GenreInExpression(this.genres);
+class GenreExpression extends Expression<String> {
+  GenreExpression(this.genres);
 
   @override
-  String get method => "genre-in";
+  String get method => "genre";
   final List<String> genres;
 
   @override
@@ -106,11 +78,11 @@ class GenreInExpression extends Expression<String> {
   }
 }
 
-class SpaceInExpression extends Expression<String> {
-  SpaceInExpression(this.spaces);
+class SpaceExpression extends Expression<String> {
+  SpaceExpression(this.spaces);
 
   @override
-  String get method => "space-in";
+  String get method => "space";
   final List<String> spaces;
 
   @override
@@ -204,15 +176,15 @@ class RegexpExpression extends Expression<String> {
   List<String> get arguments => [query];
 
   @override
-  FutureOr<bool> evaluate(Node node) async{
+  FutureOr<bool> evaluate(Node node) async {
     final path = pathTransformer?.call(node.file) ?? node.file;
     final lines = await File(path).readAsLines();
-		final regex = RegExp(query);
+    final regex = RegExp(query);
     for (final line in lines) {
       if (regex.hasMatch(line)) {
         return true;
       }
     }
-		return false;
+    return false;
   }
 }
