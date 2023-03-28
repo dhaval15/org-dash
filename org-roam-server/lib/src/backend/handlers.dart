@@ -8,11 +8,21 @@ import '../models/models.dart';
 class ApiHandlers {
   final Neuron neuron;
   final String Function(String path)? pathTransformer;
+  static NeuronOptions options = NeuronOptions.defaultOptions;
 
   ApiHandlers({
     required this.neuron,
     this.pathTransformer,
-  });
+  }) {
+    neuron.refineWithOptions(options);
+  }
+
+  Response setOptions(Request req) {
+    final params = req.url.queryParameters;
+    options = NeuronOptions.fromJson(params);
+    //TODO : Save options locally
+    return Response.ok('Successful');
+  }
 
   Response getContent(Request req, String id) {
     final originalPath = neuron.nodes.where((node) => node.id == id).first.file;
@@ -68,6 +78,15 @@ extension on Neuron {
     );
   }
 
+  void refineWithOptions(NeuronOptions options) {
+    if (options.insertGhostNodes) {
+      //TODO insert ghost nodes
+    } else {
+      final ids = nodes.map((node) => node.id).toList();
+      links.removeWhere((link) => !ids.contains(link.target));
+    }
+  }
+
   Node? findNode(String id) {
     try {
       return nodes.firstWhere((node) => id == node.id);
@@ -121,4 +140,23 @@ class LinkRef {
         'title': title,
         'id': id,
       };
+}
+
+class NeuronOptions {
+  final bool insertGhostNodes;
+  final List<String>? linkTypes;
+
+  const NeuronOptions({
+    required this.insertGhostNodes,
+    this.linkTypes,
+  });
+
+  static const defaultOptions = NeuronOptions(
+    insertGhostNodes: false,
+  );
+
+  factory NeuronOptions.fromJson(Map<String, dynamic> json) => NeuronOptions(
+        insertGhostNodes: json['insertGhostNodes'] ?? false,
+        linkTypes: json['linkTypes'],
+      );
 }
