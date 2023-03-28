@@ -1,13 +1,11 @@
-import 'dart:convert';
-import 'dart:io';
-import 'package:shelf/shelf.dart';
-
 import '../expr/expr.dart';
-import '../models/models.dart';
+import 'neuron.dart';
+import 'neuron_options.dart';
+import 'node.dart';
+import 'node_links.dart';
 
-
-extension on Neuron {
-  Future<Neuron> filter(Expression expression) async {
+extension NeuronExtension on Neuron {
+  Future<Neuron> expr(Expression expression) async {
     final newNodes = <Node>[];
     for (final node in nodes) {
       if (await expression.evaluate(node)) {
@@ -29,12 +27,17 @@ extension on Neuron {
     );
   }
 
-  void refineWithOptions(NeuronOptions options) {
+  Neuron transform(NeuronOptions options) {
     if (options.insertGhostNodes) {
       //TODO insert ghost nodes
+      return this;
     } else {
       final ids = nodes.map((node) => node.id).toList();
-      links.removeWhere((link) => !ids.contains(link.target));
+      return Neuron(
+        nodes: nodes,
+        tags: tags,
+        links: links.where((link) => !ids.contains(link.target)).toList(),
+      );
     }
   }
 
@@ -47,12 +50,10 @@ extension on Neuron {
   }
 
   LinkRef? findLinkRef(String id) {
-    final node = findNode(id);
-    if (node != null) return LinkRef(id, node.title);
-    return null;
+    return findNode(id)?.toLinkRef();
   }
 
-  NodeLinkRef findNodeLinkRef(String id) {
+  NodeLinks findNodeLinks(String id) {
     final from = <LinkRef>[];
     final to = <LinkRef>[];
     for (final link in links) {
@@ -65,19 +66,10 @@ extension on Neuron {
         if (ref != null) from.add(ref);
       }
     }
-    return NodeLinkRef(from, to);
+    return NodeLinks(from, to);
   }
 }
 
-class NodeLinkRef {
-  final List<LinkRef> from;
-  final List<LinkRef> to;
-
-  NodeLinkRef(this.from, this.to);
-
-  Map<String, dynamic> toJson() => {
-        'from': from.map((e) => e.toJson()).toList(),
-        'to': to.map((e) => e.toJson()).toList(),
-      };
+extension NodeExtension on Node {
+  LinkRef toLinkRef() => LinkRef(id, title);
 }
-
