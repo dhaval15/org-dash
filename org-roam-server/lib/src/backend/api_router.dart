@@ -6,6 +6,7 @@ import 'package:shelf_router/shelf_router.dart';
 
 import '../expr/expr.dart';
 import '../models/models.dart';
+import '../scopes/scopes.dart';
 import 'router_context.dart';
 
 class ApiRouter {
@@ -19,6 +20,8 @@ class ApiRouter {
     ..get('/api/options', getOptions)
     ..post('/api/options', setOptions)
     ..get('/api/nodelinkref', getNodeLinks)
+    ..get('/api/scopes', getScopes)
+    ..get('/api/scope', getScope)
     ..get('/api/neuron', getNeuron);
 
   Response getContent(Request req, String id) {
@@ -59,4 +62,19 @@ class ApiRouter {
     final content = context.encoder.convert(result);
     return Response.ok(content);
   }
+
+	Future<Response> getScopes(Request req) async {
+		final scopes = await context.scopeApi.fetch();
+    final content = context.encoder.convert(scopes.toJson());
+    return Response.ok(content);
+	}
+
+	Future<Response> getScope(Request req) async {
+    final params = req.url.queryParameters;
+    final id = params['id']!;
+		final scopes = await context.scopeApi.fetch();
+		final scope = scopes.firstWhere((e) => e.id == id);
+    final content = context.encoder.convert(scope.toJson());
+    return Response.ok(content);
+	}
 }

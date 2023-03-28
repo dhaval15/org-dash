@@ -34,6 +34,9 @@ Serving at http://localhost:${env.uiPort}''');
 }
 
 class NeuronRouterContext with RouterContext {
+	@override
+	ScopeApi get scopeApi => DummyScopeApi();
+
   @override
   NeuronOptions options = NeuronOptions.defaultOptions;
 
@@ -63,5 +66,41 @@ class FileLogger extends Logger {
     if (isError) {
       file.writeAsString(message);
     }
+  }
+}
+
+class DummyScopeApi extends ScopeApi {
+  @override
+  Future<List<Scope>> fetch() async {
+    return [
+			Scope(
+				id: '1',
+				label: 'Coding Space',
+				expr: '(space "Code")',
+			),
+			Scope(
+				id: '2',
+				label: 'Coding Space',
+				expr: '(regex "Father")',
+			),
+		];
+  }
+
+  @override
+  Future insert(Scope scope) {
+    // TODO: implement insert
+    throw UnimplementedError();
+  }
+
+  @override
+  Future remove(String id) {
+    // TODO: implement remove
+    throw UnimplementedError();
+  }
+
+  @override
+  Future update(Scope scope) {
+    // TODO: implement update
+    throw UnimplementedError();
   }
 }
