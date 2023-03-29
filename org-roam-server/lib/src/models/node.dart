@@ -1,3 +1,4 @@
+import 'link.dart';
 import 'utils.dart';
 class Node {
   final String id;
@@ -25,13 +26,10 @@ class Node {
   });
 
   factory Node.fromJson(Map<String, dynamic> json) {
-    final tags = json['tags'] != null
-        ? (List<String?>.from(json['tags'])..removeWhere((e) => e == null))
-        : [];
     return Node(
       id: trimQuotes(json['id']),
       properties: json['properties'],
-      tags: tags.cast<String>(),
+      tags: json['tags']?.split(',') ?? [],
       olp: json['olp']?.cast<String>(),
       pos: json['pos'],
       level: json['level'],

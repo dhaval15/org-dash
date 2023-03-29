@@ -13,10 +13,12 @@ Sqlite library :${env.sqlLibPath}
 Sqlite version: ${sqlite3.version}
 Org-roam database: ${env.dbPath}
 Org-roam-ui public dir: ${env.publicPath}''');
-  final api = SqlApi(dbPath: env.dbPath, sqlLibPath: env.sqlLibPath);
-  final neuron = await api.fetch();
+  final api = await NeuronSqlApi.create(
+    dbPath: env.dbPath,
+    sqlLibPath: env.sqlLibPath,
+  );
   final context = NeuronRouterContext(
-    neuron: neuron,
+    neuron: api.neuron,
     pathTransformer: (String path) =>
         path.replaceFirst(env.originalDirectoryPath, env.neuronPath),
   );
@@ -34,8 +36,8 @@ Serving at http://localhost:${env.uiPort}''');
 }
 
 class NeuronRouterContext with RouterContext {
-	@override
-	ScopeApi get scopeApi => DummyScopeApi();
+  @override
+  ScopeApi get scopeApi => DummyScopeApi();
 
   @override
   NeuronOptions options = NeuronOptions.defaultOptions;
@@ -73,17 +75,17 @@ class DummyScopeApi extends ScopeApi {
   @override
   Future<List<Scope>> fetch() async {
     return [
-			Scope(
-				id: '1',
-				label: 'Coding Space',
-				expr: '(space "Code")',
-			),
-			Scope(
-				id: '2',
-				label: 'Coding Space',
-				expr: '(regex "Father")',
-			),
-		];
+      Scope(
+        id: '1',
+        label: 'Coding Space',
+        expr: '(space "Code")',
+      ),
+      Scope(
+        id: '2',
+        label: 'Coding Space',
+        expr: '(regex "Father")',
+      ),
+    ];
   }
 
   @override
