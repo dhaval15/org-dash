@@ -1,5 +1,4 @@
 import 'link.dart';
-import 'utils.dart';
 class Node {
   final String id;
   final List<String> tags;
@@ -9,6 +8,7 @@ class Node {
   final int level;
   final String title;
   final String file;
+  final List<Link> links;
 
 	String get type => properties['NEURON_TYPE'] ?? 'None';
 	String get genre => properties['NEURON_GENRE'] ?? 'None';
@@ -23,18 +23,23 @@ class Node {
     required this.level,
     required this.title,
     required this.file,
+		required this.links,
   });
 
   factory Node.fromJson(Map<String, dynamic> json) {
+		final tags = json['tags'] != null
+        ? (List<String?>.from(json['tags'])..removeWhere((e) => e == null))
+        : <String>[];
     return Node(
-      id: trimQuotes(json['id']),
+      id: json['id'],
       properties: json['properties'],
-      tags: json['tags'] ?? [],
+      tags: tags as List<String>,
       olp: json['olp']?.cast<String>(),
       pos: json['pos'],
       level: json['level'],
-      title: trimQuotes(json['title']),
-      file: trimQuotes(json['file']),
+      title: json['title'],
+      file: json['file'],
+			links: json['links'] ?? [],
     );
   }
 
@@ -46,5 +51,6 @@ class Node {
         'pos': pos,
         'level': level,
         'title': title,
+        'links': links.map((e) => e.toJson()).toList(),
       };
 }

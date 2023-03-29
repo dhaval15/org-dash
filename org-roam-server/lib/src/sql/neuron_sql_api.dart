@@ -37,13 +37,24 @@ class NeuronSqlApi {
   }
 
   List<Link> get links {
-    final query = 'SELECT * FROM links;';
+    final query = '''
+SELECT 
+	${_Utils.trimQuotesQuery('l', 'type')},
+	${_Utils.trimQuotesQuery('l', 'source')},
+	${_Utils.trimQuotesQuery('l', 'dest', 'target')},
+	l.pos
+FROM links l;''';
     final response = _db.select(query);
     return response.map(Link.fromJson).toList();
   }
 
   List<String> get tags {
-    final query = 'SELECT DISTINCT tag FROM tags;';
+    final query = '''
+SELECT 
+	SUBSTRING(DISTINCT(tag), 2, LENGTH(tag) - 2) 
+		as tag 
+	FROM tags;
+''';
     final response = _db.select(query);
     return response.map((e) => e['tag'] as String).toList();
   }
@@ -51,10 +62,10 @@ class NeuronSqlApi {
   List<Node> get nodes {
     final query = '''
 SELECT 
-	n.*, 
-	(SELECT GROUP_CONCAT(t.tag) FROM tags t
-		WHERE t.node_id = n.id
-		GROUP BY t.node_id) as tags
+	n.*,
+	${_Utils.trimQuotesQuery('n', 'id')},
+	${_Utils.trimQuotesQuery('n', 'title')},
+	${_Utils.trimQuotesQuery('n', 'file')}
 	FROM nodes n;
 ''';
     final response = _db.select(query);
@@ -65,7 +76,6 @@ SELECT
           JsonDecoder().convert(elispMapToJsonText(map['properties']));
       if (map['olp'] != null)
         map['olp'] = JsonDecoder().convert(elispListToJsonText(map['olp']));
-      map['tags'] = _Utils.parseTags(map['tags']);
       return Node.fromJson(map);
     }).toList();
   }
@@ -73,27 +83,43 @@ SELECT
   List<String> findTagsForNodeId(String id) {
     final query = '''
 SELECT 
-	GROUP_CONCAT(tag) as tags 
+	GROUP_CONCAT(SUBSTRING(tag, 2, tag.length - 2)) as tags 
 	FROM tags 
 	WHERE node_id=\'"$id"\' 
 	GROUP BY node_id;
 ''';
     final response = _db.select(query);
-    return _Utils.parseTags(response.first['tags']);
+    return response.first['tags'].split(',');
   }
 
-  List<Link> findLinksForNodeId(String id, [String? file]) {
+  List<Link> findLinksForNodeId(String id) {
     final query = '''
-SELECT * 
-	FROM links 
+SELECT 
+	${_Utils.trimQuotesQuery('l', 'type')},
+	${_Utils.trimQuotesQuery('l', 'source')},
+	${_Utils.trimQuotesQuery('l', 'dest', 'target')},
+	l.pos,
+	(SELECT 
+		${_Utils.trimQuotesQuery('n', 'file')}
+		FROM nodes n 
+		WHERE n.id = l.source) as file,
+	(SELECT 
+		${_Utils.trimQuotesQuery('n', 'title')}
+		FROM nodes n 
+		WHERE n.id = l.source) as sourceLabel,
+	(SELECT 
+		${_Utils.trimQuotesQuery('n', 'title')}
+		FROM nodes n 
+		WHERE n.id = l.dest) as targetLabel
+	FROM links l
 	WHERE 
-		source=\'"$id"\' OR dest=\'"$id"\';
+		l.source=\'"$id"\' OR l.dest=\'"$id"\';
 ''';
     final response = _db.select(query);
     return response.map((e) {
       final map = Map<String, dynamic>.from(e);
-      if (file != null)
-        map['inline'] = _Utils.parseInlineText(file, map['pos']);
+      map['file'] = pathTransformer(map['file']);
+      map['inline'] = _Utils.parseInlineText(map['file'], map['pos']);
       return Link.fromJson(map);
     }).toList();
   }
@@ -101,12 +127,12 @@ SELECT *
   Node findNode(String id) {
     final query = '''
 SELECT 
-		n.*, 
-		(SELECT GROUP_CONCAT(t.tag) FROM tags t
-				WHERE t.node_id = n.id
-				GROUP BY t.node_id) as tags
-		FROM nodes n
-		WHERE n.id=\'"$id"\'
+	n.*, 
+	${_Utils.trimQuotesQuery('n', 'id')},
+	${_Utils.trimQuotesQuery('n', 'title')},
+	${_Utils.trimQuotesQuery('n', 'file')}
+	FROM nodes n
+	WHERE n.id=\'"$id"\'
 ''';
     final response = _db.select(query);
     final map = Map<String, dynamic>.from(response.first);
@@ -115,16 +141,15 @@ SELECT
         JsonDecoder().convert(elispMapToJsonText(map['properties']));
     if (map['olp'] != null)
       map['olp'] = JsonDecoder().convert(elispListToJsonText(map['olp']));
-		print(map);
-    map['tags'] = _Utils.parseTags(map['tags']);
-    map['incoming'] = findLinksForNodeId(id, trimQuotes(map['file']));
+    map['links'] = findLinksForNodeId(id);
     return Node.fromJson(map);
   }
 }
 
 class _Utils {
-  static List<String> parseTags(String? text) =>
-      text?.split(',').map(trimQuotes).toList() ?? [];
+  static String trimQuotesQuery(String table, String column,
+          [String? asColumn]) =>
+      'SUBSTRING($table.$column, 2, LENGTH($table.$column) - 2) as ${asColumn ?? column}';
 
   static String? parseInlineText(String path, int pos) {
     final file = File(path);
