@@ -5,12 +5,12 @@ import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
 import '../expr/expr.dart';
-import '../models/models.dart';
 import '../scopes/scopes.dart';
+import '../models/models.dart';
 import 'router_context.dart';
 
 class ApiRouter {
-	final RouterContext context;
+  final RouterContext context;
 
   const ApiRouter(this.context);
 
@@ -25,7 +25,8 @@ class ApiRouter {
     ..get('/api/neuron', getNeuron);
 
   Response getContent(Request req, String id) {
-    final originalPath = context.neuron.nodes.where((node) => node.id == id).first.file;
+    final originalPath =
+        context.neuronApi.findNode(id).file;
     final newPath = context.transformPath(originalPath);
     final file = File(newPath);
     final text = file.readAsStringSync();
@@ -38,19 +39,19 @@ class ApiRouter {
 
   Response setOptions(Request req) {
     //TODO
-		return Response.ok('Yet to be implemented');
+    return Response.ok('Yet to be implemented');
   }
 
   Response getNodeLinks(Request req) {
     final params = req.url.queryParameters;
     final id = params['id']!;
-    final result = (context.neuron.findNodeLinks(id)).toJson();
+    final result = (context.neuronApi.neuron.findNodeLinks(id)).toJson();
     final content = context.encoder.convert(result);
     return Response.ok(content);
   }
 
   Response getNeuron(Request req) {
-    final content = context.encoder.convert(context.neuron.toJson());
+    final content = context.encoder.convert(context.neuronApi.neuron.toJson());
     return Response.ok(content);
   }
 
@@ -58,23 +59,23 @@ class ApiRouter {
     final params = req.url.queryParameters;
     final filterQuery = params['q'];
     final expression = Expression.parse(filterQuery!);
-    final result = (await context.neuron.expr(expression)).toJson();
+    final result = (await context.neuronApi.neuron.expr(expression)).toJson();
     final content = context.encoder.convert(result);
     return Response.ok(content);
   }
 
-	Future<Response> getScopes(Request req) async {
-		final scopes = await context.scopeApi.fetch();
+  Future<Response> getScopes(Request req) async {
+    final scopes = await context.scopeApi.fetch();
     final content = context.encoder.convert(scopes.toJson());
     return Response.ok(content);
-	}
+  }
 
-	Future<Response> getScope(Request req) async {
+  Future<Response> getScope(Request req) async {
     final params = req.url.queryParameters;
     final id = params['id']!;
-		final scopes = await context.scopeApi.fetch();
-		final scope = scopes.firstWhere((e) => e.id == id);
+    final scopes = await context.scopeApi.fetch();
+    final scope = scopes.firstWhere((e) => e.id == id);
     final content = context.encoder.convert(scope.toJson());
     return Response.ok(content);
-	}
+  }
 }

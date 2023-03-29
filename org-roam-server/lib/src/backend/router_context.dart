@@ -2,9 +2,10 @@ import 'dart:convert';
 
 import '../models/models.dart';
 import '../scopes/scopes.dart';
+import '../sql/sql.dart';
 
 abstract class RouterContext {
-  Neuron get neuron;
+	NeuronSqlApi get neuronApi;
   NeuronOptions get options;
   set options(NeuronOptions value);
   JsonEncoder get encoder;

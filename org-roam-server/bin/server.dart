@@ -13,12 +13,12 @@ Sqlite library :${env.sqlLibPath}
 Sqlite version: ${sqlite3.version}
 Org-roam database: ${env.dbPath}
 Org-roam-ui public dir: ${env.publicPath}''');
-  final api = await NeuronSqlApi.create(
+  final neuronApi = await NeuronSqlApi.create(
     dbPath: env.dbPath,
     sqlLibPath: env.sqlLibPath,
   );
   final context = NeuronRouterContext(
-    neuron: api.neuron,
+    neuronApi: neuronApi,
     pathTransformer: (String path) =>
         path.replaceFirst(env.originalDirectoryPath, env.neuronPath),
   );
@@ -36,6 +36,7 @@ Serving at http://localhost:${env.uiPort}''');
 }
 
 class NeuronRouterContext with RouterContext {
+
   @override
   ScopeApi get scopeApi => DummyScopeApi();
 
@@ -45,12 +46,10 @@ class NeuronRouterContext with RouterContext {
   @override
   final JsonEncoder encoder = JsonEncoder();
 
-  final Neuron neuron;
-
   final String Function(String path) pathTransformer;
 
   NeuronRouterContext({
-    required this.neuron,
+    required this.neuronApi,
     required this.pathTransformer,
   });
 
@@ -58,6 +57,9 @@ class NeuronRouterContext with RouterContext {
   String transformPath(String path) {
     return pathTransformer(path);
   }
+
+  @override
+  final NeuronSqlApi neuronApi;
 }
 
 class FileLogger extends Logger {
