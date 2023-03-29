@@ -29,7 +29,7 @@ class Node {
     return Node(
       id: trimQuotes(json['id']),
       properties: json['properties'],
-      tags: json['tags']?.split(',') ?? [],
+      tags: json['tags'] ?? [],
       olp: json['olp']?.cast<String>(),
       pos: json['pos'],
       level: json['level'],

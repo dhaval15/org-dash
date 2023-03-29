@@ -8,18 +8,20 @@ import '../models/models.dart';
 
 class NeuronSqlApi {
   final Database _db;
+  final String Function(String path) pathTransformer;
 
-  const NeuronSqlApi(this._db);
+  const NeuronSqlApi(this._db, this.pathTransformer);
 
   static Future<NeuronSqlApi> create({
     required String dbPath,
     required String sqlLibPath,
+    required String Function(String path) pathTransformer,
   }) async {
     open.overrideFor(OperatingSystem.linux, () {
       return DynamicLibrary.open(sqlLibPath);
     });
     final db = sqlite3.open(dbPath);
-    return NeuronSqlApi(db);
+    return NeuronSqlApi(db, pathTransformer);
   }
 
   void dispose() {
@@ -58,10 +60,12 @@ SELECT
     final response = _db.select(query);
     return response.map((e) {
       final map = Map<String, dynamic>.from(e);
+      map['file'] = pathTransformer(map['file']);
       map['properties'] =
           JsonDecoder().convert(elispMapToJsonText(map['properties']));
       if (map['olp'] != null)
         map['olp'] = JsonDecoder().convert(elispListToJsonText(map['olp']));
+      map['tags'] = _Utils.parseTags(map['tags']);
       return Node.fromJson(map);
     }).toList();
   }
@@ -75,7 +79,7 @@ SELECT
 	GROUP BY node_id;
 ''';
     final response = _db.select(query);
-    return response.first['tags'].split(',');
+    return _Utils.parseTags(response.first['tags']);
   }
 
   List<Link> findLinksForNodeId(String id, [String? file]) {
@@ -89,7 +93,7 @@ SELECT *
     return response.map((e) {
       final map = Map<String, dynamic>.from(e);
       if (file != null)
-        map['inline'] = LinkUtils.parseInlineText(file, map['pos']);
+        map['inline'] = _Utils.parseInlineText(file, map['pos']);
       return Link.fromJson(map);
     }).toList();
   }
@@ -100,23 +104,28 @@ SELECT
 		n.*, 
 		(SELECT GROUP_CONCAT(t.tag) FROM tags t
 				WHERE t.node_id = n.id
-				GROUP BY t.node_id) as tags,
-		FROM nodes n;
-		WHERE id=\'"$id"\'
+				GROUP BY t.node_id) as tags
+		FROM nodes n
+		WHERE n.id=\'"$id"\'
 ''';
     final response = _db.select(query);
     final map = Map<String, dynamic>.from(response.first);
+    map['file'] = pathTransformer(map['file']);
     map['properties'] =
         JsonDecoder().convert(elispMapToJsonText(map['properties']));
     if (map['olp'] != null)
       map['olp'] = JsonDecoder().convert(elispListToJsonText(map['olp']));
-    map['tags'] = findTagsForNodeId(id);
+		print(map);
+    map['tags'] = _Utils.parseTags(map['tags']);
     map['incoming'] = findLinksForNodeId(id, trimQuotes(map['file']));
     return Node.fromJson(map);
   }
 }
 
-class LinkUtils {
+class _Utils {
+  static List<String> parseTags(String? text) =>
+      text?.split(',').map(trimQuotes).toList() ?? [];
+
   static String? parseInlineText(String path, int pos) {
     final file = File(path);
     final rf = file.openSync();

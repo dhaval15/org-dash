@@ -2,8 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:server/server.dart';
 import 'package:server/src/env/env.dart';
-import 'package:server/src/models/neuron_options.dart';
-import 'package:server/src/models/neuron.dart';
+import 'package:server/src/models/models.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 void main(List<String> arguments) async {
@@ -16,6 +15,8 @@ Org-roam-ui public dir: ${env.publicPath}''');
   final neuronApi = await NeuronSqlApi.create(
     dbPath: env.dbPath,
     sqlLibPath: env.sqlLibPath,
+    pathTransformer: (String path) =>
+        path.replaceFirst(env.originalDirectoryPath, env.neuronPath),
   );
   final context = NeuronRouterContext(
     neuronApi: neuronApi,
