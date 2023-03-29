@@ -45,7 +45,7 @@ class NeuronRouterContext with RouterContext {
   NeuronOptions options = NeuronOptions.defaultOptions;
 
   @override
-  final JsonEncoder encoder = JsonEncoder();
+  final JsonEncoder encoder = JsonEncoder.withIndent('\t');
 
   final String Function(String path) pathTransformer;
 
